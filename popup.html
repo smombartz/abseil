@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="popup.css" />
+    <title>Abseil</title>
+  </head>
+  <body>
+    <header class="bar">
+      <div class="brand">
+        <img src="icons/icon32.png" alt="" width="22" height="22" />
+        <h1>Abseil</h1>
+        <span id="moduleBadge" class="badge" hidden></span>
+      </div>
+      <div id="barActions" class="bar-actions"></div>
+    </header>
+
+    <main id="view" class="view" aria-live="polite">
+      <div id="bootStatus" class="status">Looking at this page…</div>
+    </main>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

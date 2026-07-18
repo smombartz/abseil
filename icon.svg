@@ -1,0 +1,31 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d212b"/>
+      <stop offset="1" stop-color="#0f1115"/>
+    </linearGradient>
+    <linearGradient id="a" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff8a5c"/>
+      <stop offset="1" stop-color="#ff6a3d"/>
+    </linearGradient>
+    <linearGradient id="rope" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd166"/>
+      <stop offset="1" stop-color="#ff8a5c"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="2" y="2" width="124" height="124" rx="28" fill="url(#bg)"/>
+  <rect x="2.5" y="2.5" width="123" height="123" rx="27.5" fill="none" stroke="#3a4150" stroke-width="1"/>
+
+  <!-- anchor bar + carabiner ring -->
+  <rect x="40" y="11" width="48" height="6" rx="3" fill="#5a6373"/>
+  <circle cx="64" cy="22" r="6" fill="none" stroke="#aeb6c4" stroke-width="3.5"/>
+  <!-- rope down to the letter's apex -->
+  <path d="M64 28 L64 40" stroke="url(#rope)" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- big bold 'A' abseiling -->
+  <g fill="none" stroke="url(#a)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M30 108 L64 42 L98 108"/>
+    <path d="M44 84 L84 84"/>
+  </g>
+</svg>

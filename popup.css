@@ -1,0 +1,305 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --panel-2: #1d212b;
+  --line: #2a2f3a;
+  --text: #e8eaf0;
+  --muted: #9aa3b2;
+  --accent: #ff6a3d;
+  --accent-2: #ffd166;
+  --good: #4ade80;
+  --bad: #f87171;
+  --radius: 10px;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; }
+
+body {
+  width: 384px;
+  /* Size to content, capped — so the tall Fonts list scrolls within 600px while
+     the smaller Pinterest panel stays compact instead of padding empty space. */
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* ---- header ---- */
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, #1b1f28, #14171e);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  flex: 0 0 auto;
+}
+.brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.brand h1 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+.brand img { border-radius: 5px; display: block; }
+
+/* module identity chip, e.g. "Fonts" / "Pinterest" */
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--accent-2);
+  border: 1px solid rgba(255, 209, 102, 0.4);
+  border-radius: 999px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.bar-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.toggle input { accent-color: var(--accent); margin: 0; }
+
+/* ---- view container (modules render inside) ---- */
+.view {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.status {
+  color: var(--muted);
+  text-align: center;
+  padding: 28px 16px;
+  line-height: 1.5;
+}
+.status a { color: var(--accent-2); }
+
+/* ---- summary line (fonts) ---- */
+.summary {
+  padding: 7px 12px;
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+.summary b { color: var(--text); font-weight: 600; }
+
+/* ---- scrolling list (fonts) ---- */
+.list {
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ---- font card ---- */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  /* As flex items in the scrolling column, cards must not shrink — otherwise
+     `overflow:hidden` collapses their min-height to 0 and clips the file rows /
+     download buttons instead of letting .list scroll. */
+  flex: 0 0 auto;
+}
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 11px 7px;
+}
+.fam {
+  font-weight: 600;
+  font-size: 13px;
+  word-break: break-word;
+}
+.tags { display: flex; gap: 5px; flex-shrink: 0; }
+.tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+.tag.used { color: var(--good); border-color: rgba(74, 222, 128, 0.4); }
+
+.preview {
+  padding: 2px 11px 9px;
+  font-size: 22px;
+  line-height: 1.25;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+.preview.loaded { opacity: 1; }
+
+.files {
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+.file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  border-top: 1px solid rgba(42, 47, 58, 0.6);
+}
+.file:first-child { border-top: none; }
+.file-meta { flex: 1 1 auto; min-width: 0; }
+.file-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-sub {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 1px;
+  display: flex;
+  gap: 6px;
+}
+.pill {
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--accent-2);
+}
+
+/* ---- buttons (shared) ---- */
+.btn {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 6px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, transform 0.05s;
+}
+.btn:hover { background: #262b36; }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn-dl { padding: 5px 9px; font-size: 11px; }
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a0e08;
+}
+.btn-primary:hover { background: #ff7d56; }
+.btn.done { color: var(--good); border-color: rgba(74, 222, 128, 0.4); }
+.btn.fail { color: var(--bad); border-color: rgba(248, 113, 113, 0.4); }
+/* Visible keyboard focus — the dark theme hides the browser default. accent-2
+   reads clearly on both the panel buttons and the orange primary. */
+.btn:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+}
+.toggle input:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 1px;
+}
+
+/* ---- footer (fonts) ---- */
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+  position: sticky;
+  bottom: 0;
+  flex: 0 0 auto;
+}
+.foot-count { font-size: 11px; color: var(--muted); }
+
+/* ---- gallery-downloader modules (Pinterest, Behance, …) ---- */
+.gal {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gal-hero { padding: 13px 14px; }
+.gal-hero-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.gal-hero-sub {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.gal-actions { display: flex; flex-direction: column; gap: 8px; }
+.gal-btn {
+  width: 100%;
+  padding: 10px 0;
+  font-size: 13px;
+}
+.gal-status {
+  font-size: 12px;
+  color: var(--muted);
+  min-height: 32px;
+  line-height: 1.45;
+  padding: 2px 2px 0;
+}
+.gal-status.busy { color: var(--text); }
+.gal-status.done { color: var(--good); }
+.gal-status.fail { color: var(--bad); }
+
+/* scrollbars */
+.list::-webkit-scrollbar,
+.gal::-webkit-scrollbar { width: 10px; }
+.list::-webkit-scrollbar-thumb,
+.gal::-webkit-scrollbar-thumb {
+  background: #2c313c;
+  border: 3px solid var(--bg);
+  border-radius: 999px;
+}
