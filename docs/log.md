@@ -1,5 +1,21 @@
 # Change log
 
+## 2026-09-27 - Logo and screenshots in README
+
+**What Changed:**
+- README now opens with the centred Abseil logo (`icon.svg`)
+- Added a Screenshots section: a 2×2 grid of the real toolbar popup (Fonts, Images, Pinterest, Behance)
+- Screenshots captured with a puppeteer-core script that opens each sample page in Chrome for Testing and triggers the popup via `chrome.action.openPopup()` (smashingmagazine.com, a Behance curated project, a Pinterest search)
+
+**Why:**
+- The GitHub repo page had no visuals
+
+**Files Modified:**
+- `README.md`
+- `docs/screenshots/fonts.png`, `images.png`, `pinterest.png`, `behance.png` (new)
+
+---
+
 ## 2026-09-27 - Images tab, Fonts origin info, README update
 
 **What Changed:**

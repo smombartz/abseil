@@ -1,4 +1,8 @@
-# Abseil 🧗
+<p align="center">
+  <img src="icon.svg" alt="Abseil logo" width="96" height="96" />
+</p>
+
+<h1 align="center">Abseil</h1>
 
 One Chrome (Manifest V3) extension that rappels into the current page and brings
 back what you need. Click the toolbar icon and Abseil shows the right tool for
@@ -18,6 +22,19 @@ where you are:
 It merges the former **Font Abseil** and **Pinterest Board Downloader** into a
 single tool with one icon and one uniform UI — plus a **Behance** image
 downloader — and is built to grow: adding a new capability is a drop-in.
+
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="50%"><img src="docs/screenshots/fonts.png" alt="Fonts tab listing a page's font families and files" width="320" /><br /><sub><b>Fonts</b>: every family and file on the page</sub></td>
+    <td align="center" width="50%"><img src="docs/screenshots/images.png" alt="Images tab listing page images with thumbnails" width="320" /><br /><sub><b>Images</b>: thumbnails, open or download each</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/pinterest.png" alt="Pinterest board downloader" width="320" /><br /><sub><b>Pinterest</b>: a whole board at full resolution</sub></td>
+    <td align="center"><img src="docs/screenshots/behance.png" alt="Behance project downloader" width="320" /><br /><sub><b>Behance</b>: every image in a project</sub></td>
+  </tr>
+</table>
 
 ## Install (unpacked / developer mode)
 
@@ -91,6 +108,8 @@ extension/
       collector.js         injected into each page frame; finds <img>, srcset, CSS bgs, icons
       background.js        download handler (extension from URL, data: MIME, or HEAD)
   icons/                   toolbar icons (Font Abseil's icon, reused)
+  icon.svg                 source logo (also shown in this README)
+  docs/screenshots/        popup screenshots used in this README
 ```
 
 **Message protocol.** Every runtime message carries a `module` field
