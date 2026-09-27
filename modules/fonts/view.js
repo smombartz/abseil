@@ -114,6 +114,34 @@ function fileLabel(rec) {
   }
 }
 
+// Google Fonts serves every file from fonts.gstatic.com.
+function isGoogleFont(rec) {
+  try {
+    return new URL(rec.url).hostname === "fonts.gstatic.com";
+  } catch {
+    return false;
+  }
+}
+
+// Where a family is served from: a known font service, the site itself, or another host.
+// Same-site means the last two hostname labels match (so cdn.site.com counts as self-hosted).
+const siteOf = (host) => host.split(".").slice(-2).join(".");
+function fontOrigin(fam, pageUrl) {
+  const rec = fam.files.find((f) => !f.isData);
+  if (!rec) return "embedded";
+  try {
+    const host = new URL(rec.url).hostname;
+    if (host === "fonts.gstatic.com") return "Google";
+    if (/(^|\.)typekit\.net$/.test(host)) return "Adobe";
+    if (host === "fonts.bunny.net") return "Bunny";
+    const pageHost = new URL(pageUrl).hostname;
+    if (siteOf(host) === siteOf(pageHost)) return "self-hosted";
+    return host.replace(/^www\./, "");
+  } catch {
+    return "other";
+  }
+}
+
 function recToItem(rec) {
   return {
     url: rec.url,
@@ -202,9 +230,17 @@ function mount({ view, barActions, tab }) {
 
     // summary (count the "Other font files" card as one group too)
     const famCount = visibleFamilies.length + (showOrphans ? 1 : 0);
-    summaryEl.innerHTML = `<b>${famCount}</b> ${famCount === 1 ? "family" : "families"} · <b>${totalFiles}</b> ${
-      totalFiles === 1 ? "file" : "files"
-    }`;
+    const origins = new Map(); // origin -> family count, in first-seen (sorted) order
+    for (const fam of visibleFamilies) {
+      const o = fontOrigin(fam, tab.url);
+      origins.set(o, (origins.get(o) || 0) + 1);
+    }
+    const esc = (t) => t.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
+    const originText = Array.from(origins, ([o, n]) => `<b>${n}</b> ${esc(o)}`).join(", ");
+    summaryEl.innerHTML =
+      `<b>${famCount}</b> ${famCount === 1 ? "family" : "families"} · <b>${totalFiles}</b> ${
+        totalFiles === 1 ? "file" : "files"
+      }` + (originText ? ` · ${originText}` : "");
     summaryEl.hidden = false;
 
     for (const fam of visibleFamilies) {
@@ -235,6 +271,17 @@ function mount({ view, barActions, tab }) {
     const tag = document.createElement("span");
     tag.className = "tag" + (fam.used ? " used" : "");
     tag.textContent = fam.used ? "used" : "declared";
+    if (fam.files.some(isGoogleFont)) {
+      // links to the specimen page, where the family is free to download
+      const g = document.createElement("a");
+      g.className = "tag google";
+      g.textContent = "Google";
+      g.href = `https://fonts.google.com/specimen/${encodeURIComponent(fam.family).replace(/%20/g, "+")}`;
+      g.target = "_blank";
+      g.rel = "noopener";
+      g.title = "Google Fonts — open the specimen page";
+      tags.appendChild(g);
+    }
     tags.appendChild(tag);
     head.appendChild(name);
     head.appendChild(tags);

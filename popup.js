@@ -8,9 +8,13 @@
 import { MODULES } from "./modules/registry.js";
 
 const badgeEl = document.getElementById("moduleBadge");
+const tabsEl = document.getElementById("moduleTabs");
 const barActionsEl = document.getElementById("barActions");
 const viewEl = document.getElementById("view");
 const bootStatusEl = document.getElementById("bootStatus");
+
+// Remembers the last page-tool tab (Fonts / Images) across popup opens.
+const TAB_KEY = "abseil:pageTab";
 
 // Pages where no extension can inject or read — show a friendly note instead of
 // silently failing. Mirrors the guard Font Abseil used before the merge.
@@ -74,34 +78,116 @@ async function main() {
       return false;
     }
   };
-  // Specific tools win; the fallback (Fonts) only runs when nothing else claims
-  // the page, so a catch-all can't shadow a more specific module.
-  const mod =
-    MODULES.filter((m) => !m.fallback).find(matches) ||
-    MODULES.find((m) => m.fallback && matches(m));
-  if (!mod) {
+  // Specific tools win; the fallback page tools (Fonts, Images) only run when
+  // nothing else claims the page, so a catch-all can't shadow a specific module.
+  const specific = MODULES.filter((m) => !m.fallback).find(matches);
+  const mods = specific ? [specific] : MODULES.filter((m) => m.fallback && matches(m));
+  if (!mods.length) {
     showBoot(
-      "Abseil has nothing to grab here.<br><span style='color:var(--muted);font-size:11px'>Open a normal website (for fonts), a Pinterest board, or a Behance project (for images).</span>"
+      "Abseil has nothing to grab here.<br><span style='color:var(--muted);font-size:11px'>Open a normal website (for fonts and images), a Pinterest board, or a Behance project.</span>"
     );
     return;
   }
 
-  // Hand the cleared view to the module.
   bootStatusEl.hidden = true;
   viewEl.innerHTML = "";
   barActionsEl.innerHTML = "";
-  badgeEl.textContent = mod.label;
-  badgeEl.hidden = false;
+  const base = { tab, url, host, path };
 
-  try {
-    mod.mount({ view: viewEl, barActions: barActionsEl, badge: badgeEl, tab, url, host, path });
-  } catch (e) {
-    showBoot(
-      "Something went wrong starting this tool.<br><span style='color:var(--muted);font-size:11px'>" +
-        (e && e.message ? e.message : "Unknown error") +
-        "</span>"
-    );
+  if (mods.length === 1) {
+    badgeEl.textContent = mods[0].label;
+    badgeEl.hidden = false;
+    mountInto(mods[0], viewEl, barActionsEl, base);
+    return;
   }
+  mountTabs(mods, base);
+}
+
+// Mount a module into its own view + header-action containers, reporting a
+// startup error inside that view instead of blanking the popup.
+function mountInto(mod, view, barActions, base) {
+  try {
+    mod.mount({ ...base, view, barActions, badge: badgeEl });
+  } catch (e) {
+    view.innerHTML =
+      "<div class='status'>Something went wrong starting this tool.<br><span style='color:var(--muted);font-size:11px'>" +
+      (e && e.message ? e.message : "Unknown error") +
+      "</span></div>";
+  }
+}
+
+// Several page tools share the page: show them as header pills that act like
+// tabs. Each tool gets its own pane + header-action slot, mounted lazily on
+// first visit and kept alive after, so switching back doesn't rescan the page.
+function mountTabs(mods, base) {
+  const panes = new Map(); // id -> { pane, slot, btn }
+  let saved = null;
+  try {
+    saved = localStorage.getItem(TAB_KEY);
+  } catch {
+    /* storage unavailable */
+  }
+
+  function select(id) {
+    for (const [mid, p] of panes) {
+      const on = mid === id;
+      p.btn.setAttribute("aria-selected", String(on));
+      p.btn.tabIndex = on ? 0 : -1;
+      p.pane.hidden = !on;
+      p.slot.hidden = !on;
+      if (on && !p.mounted) {
+        p.mounted = true;
+        mountInto(p.mod, p.pane, p.slot, base);
+      }
+    }
+    try {
+      localStorage.setItem(TAB_KEY, id);
+    } catch {
+      /* storage unavailable */
+    }
+  }
+
+  for (const mod of mods) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "badge tab";
+    btn.id = `tab-${mod.id}`;
+    btn.textContent = mod.label;
+    btn.setAttribute("role", "tab");
+    btn.setAttribute("aria-controls", `pane-${mod.id}`);
+    btn.addEventListener("click", () => select(mod.id));
+    tabsEl.appendChild(btn);
+
+    const pane = document.createElement("div");
+    pane.className = "pane";
+    pane.id = `pane-${mod.id}`;
+    pane.setAttribute("role", "tabpanel");
+    pane.setAttribute("aria-labelledby", btn.id);
+    pane.hidden = true;
+    viewEl.appendChild(pane);
+
+    const slot = document.createElement("div");
+    slot.className = "bar-slot";
+    slot.hidden = true;
+    barActionsEl.appendChild(slot);
+
+    panes.set(mod.id, { mod, btn, pane, slot, mounted: false });
+  }
+
+  // Arrow keys move between tabs, as in any tablist.
+  tabsEl.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    const ids = mods.map((m) => m.id);
+    const cur = ids.indexOf(document.activeElement && document.activeElement.id.replace(/^tab-/, ""));
+    if (cur < 0) return;
+    const next = ids[(cur + (e.key === "ArrowRight" ? 1 : ids.length - 1)) % ids.length];
+    select(next);
+    panes.get(next).btn.focus();
+    e.preventDefault();
+  });
+
+  tabsEl.hidden = false;
+  select(panes.has(saved) ? saved : mods[0].id);
 }
 
 main();

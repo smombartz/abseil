@@ -67,7 +67,31 @@ body {
   white-space: nowrap;
 }
 
+/* page-tool tabs (Fonts / Images) — the badge pill, made clickable */
+.tabs { display: flex; align-items: center; gap: 5px; }
+.tabs[hidden] { display: none; }
+.badge.tab {
+  font-family: var(--sans);
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--line);
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.badge.tab:hover { color: var(--text); border-color: #3a404d; }
+.badge.tab[aria-selected="true"] {
+  color: var(--accent-2);
+  border-color: rgba(255, 209, 102, 0.4);
+  background: rgba(255, 209, 102, 0.08);
+}
+.badge.tab:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+}
+
 .bar-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.bar-slot { display: flex; align-items: center; gap: 8px; }
+.bar-slot[hidden] { display: none; }
 
 .toggle {
   display: inline-flex;
@@ -88,6 +112,16 @@ body {
   flex-direction: column;
   overflow: hidden;
 }
+
+/* one pane per page-tool tab; fills the view like a module would */
+.pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.pane[hidden] { display: none; }
 
 .status {
   color: var(--muted);
@@ -154,6 +188,8 @@ body {
   border: 1px solid var(--line);
 }
 .tag.used { color: var(--good); border-color: rgba(74, 222, 128, 0.4); }
+.tag.google { color: #8ab4f8; border-color: rgba(138, 180, 248, 0.4); text-decoration: none; }
+.tag.google:hover { border-color: #8ab4f8; }
 
 .preview {
   padding: 2px 11px 9px;
@@ -203,6 +239,25 @@ body {
   letter-spacing: 0.4px;
   color: var(--accent-2);
 }
+
+/* image thumbnail (images) — checkerboard so transparent PNG/SVGs stay visible */
+.thumb {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  background: #2a2f3a;
+  background-image:
+    linear-gradient(45deg, #232730 25%, transparent 25%, transparent 75%, #232730 75%),
+    linear-gradient(45deg, #232730 25%, transparent 25%, transparent 75%, #232730 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 5px 5px;
+}
+.thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.thumb.broken img { visibility: hidden; }
+.file .btn-dl + .btn-dl { margin-left: -2px; }
 
 /* ---- buttons (shared) ---- */
 .btn {
@@ -254,6 +309,7 @@ body {
   bottom: 0;
   flex: 0 0 auto;
 }
+.foot[hidden] { display: none; } /* display:flex would otherwise beat [hidden] */
 .foot-count { font-size: 11px; color: var(--muted); }
 
 /* ---- gallery-downloader modules (Pinterest, Behance, …) ---- */

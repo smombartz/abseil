@@ -9,12 +9,14 @@
 import * as fonts from "./modules/fonts/background.js";
 import * as pinterest from "./modules/pinterest/background.js";
 import * as behance from "./modules/behance/background.js";
+import * as images from "./modules/images/background.js";
 
 // module id -> handle(msg, sender, sendResponse) => true if it will respond async
 const HANDLERS = {
   fonts: fonts.handle,
   pinterest: pinterest.handle,
   behance: behance.handle,
+  images: images.handle,
 };
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {

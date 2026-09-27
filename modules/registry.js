@@ -1,8 +1,9 @@
 // Abseil — capability registry.
 //
 // The popup tries every SPECIFIC module first (registry order = priority among
-// them), then falls back to the one module marked { fallback: true }. `fonts`
-// matches any http(s) page, so it is the fallback — flagging it that way means a
+// them), then falls back to the modules marked { fallback: true } — the generic
+// "page tools" (Fonts, Images) that work on any http(s) page. Those are shown
+// together as header tabs, in registry order. Flagging them this way means a
 // catch-all can never accidentally shadow a specific tool, no matter the order.
 //
 // To add a capability (e.g. a Behance image downloader): create
@@ -15,12 +16,13 @@
 import fonts from "./fonts/view.js";
 import pinterest from "./pinterest/view.js";
 import behance from "./behance/view.js";
+import images from "./images/view.js";
 
-export const MODULES = [pinterest, behance, fonts];
+export const MODULES = [pinterest, behance, fonts, images];
 
-// Exactly one fallback must exist — guard against a future edit dropping it or
-// marking two. Logs in dev; harmless in production.
+// At least one fallback must exist, or ordinary pages get nothing. Logs in dev;
+// harmless in production.
 console.assert(
-  MODULES.filter((m) => m.fallback).length === 1,
-  "registry: exactly one module must be marked { fallback: true }"
+  MODULES.some((m) => m.fallback),
+  "registry: at least one module must be marked { fallback: true }"
 );

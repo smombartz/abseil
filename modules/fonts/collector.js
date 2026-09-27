@@ -1,8 +1,9 @@
 // Abseil · Fonts — page collector.
 // Injected with chrome.scripting.executeScript({ files: ['modules/fonts/collector.js'] }).
 // Runs in the page's world, in every reachable frame, and RETURNS a data object
-// (the value of the trailing IIFE becomes InjectionResult.result).
-(() => {
+// (the value of the trailing IIFE becomes InjectionResult.result; executeScript
+// awaits the returned promise).
+(async () => {
   "use strict";
 
   const FONT_EXT = /\.(woff2|woff|ttf|otf|eot)(?:[?#]|$)/i;
@@ -48,6 +49,8 @@
   // ---- 1. @font-face rules from every readable stylesheet ----------------
   const faces = [];
   const seenFaceUrls = new Set();
+  // Cross-origin sheets (e.g. fonts.googleapis.com) whose cssRules can't be read.
+  const unreadableSheets = new Set();
 
   const extFromUrl = (url) => {
     const m = url.match(FONT_EXT);
@@ -119,7 +122,9 @@
         try {
           walkRules(rule.styleSheet.cssRules, rule.styleSheet.href || sheetBase);
         } catch {
-          /* cross-origin imported sheet — unreadable */
+          // cross-origin imported sheet — fetched and parsed below
+          const href = rule.styleSheet.href || (rule.href && resolveUrl(rule.href, sheetBase));
+          if (href) unreadableSheets.add(href);
         }
       } else if (rule.cssRules) {
         // @media / @supports / @layer / @container groups can wrap @font-face.
@@ -134,9 +139,45 @@
       rules = sheet.cssRules; // throws for cross-origin sheets without CORS
     } catch {
       rules = null;
+      if (sheet.href) unreadableSheets.add(sheet.href);
     }
     walkRules(rules, sheet.href || document.baseURI);
   }
+
+  // ---- 1b. Fetch + parse cross-origin sheets ------------------------------
+  // Font CDNs (Google Fonts, Typekit, Bunny…) send Access-Control-Allow-Origin: *,
+  // so the CSS text is fetchable even though cssRules is locked. It is usually a
+  // cache hit. A constructed sheet parses @font-face but drops @import, so imports
+  // are followed by hand (depth-limited).
+  const IMPORT_RE = /@import\s+(?:url\(\s*)?["']?([^"')\s;]+)["']?\s*\)?/gi;
+  const fetchedSheets = new Set();
+  const fetchSheet = async (href, depth) => {
+    if (depth > 3 || fetchedSheets.has(href) || !/^https?:/i.test(href)) return;
+    fetchedSheets.add(href);
+    let text;
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 4000);
+      const res = await fetch(href, { signal: ctrl.signal, credentials: "omit" });
+      clearTimeout(timer);
+      if (!res.ok) return;
+      text = await res.text();
+    } catch {
+      return; // no CORS headers / network error — network-detection path still applies
+    }
+    try {
+      const sheet = new CSSStyleSheet();
+      sheet.replaceSync(text);
+      walkRules(sheet.cssRules, href);
+    } catch {
+      /* unparseable */
+    }
+    const imports = [];
+    let m;
+    while ((m = IMPORT_RE.exec(text))) imports.push(resolveUrl(m[1], href));
+    await Promise.all(imports.map((u) => fetchSheet(u, depth + 1)));
+  };
+  await Promise.all(Array.from(unreadableSheets).map((href) => fetchSheet(href, 0)));
 
   // ---- 2. Network-detected font files (catches cross-origin stylesheets) --
   const networkFonts = [];

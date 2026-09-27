@@ -6,7 +6,11 @@ where you are:
 
 - **Pinterest board** → download every pin at full resolution.
 - **Behance project** → download every image in the project at full resolution.
-- **Any other website** → list and download the page's fonts (woff2, woff, ttf, otf, eot).
+- **Any other website** → two tabs in the header:
+  - **Fonts** — list and download the page's fonts (woff2, woff, ttf, otf, eot). The
+    summary shows where families are served from (Google, Adobe, Bunny, self-hosted, or
+    another host), and Google Fonts families get a **Google** tag linking to their specimen page.
+  - **Images** — list every image (with thumbnails) and open each in a new tab or download it.
 
 > *Abseil* = to descend on a rope. Abseil rappels down into a page, grabs what's
 > worth keeping, and brings it back up.
@@ -24,13 +28,33 @@ downloader — and is built to grow: adding a new capability is a drop-in.
 
 Works in Chrome, Edge, Brave, and other Chromium browsers.
 
+### Dev browser (one command)
+
+```bash
+./dev-browser.sh
+```
+
+Opens a throwaway test browser with Abseil already loaded — no manual *Load unpacked* — on
+`chrome://extensions` plus a Pinterest tab. After editing files, hit **Reload** on that
+extensions tab.
+
+It launches **Chrome for Testing**, not your normal Chrome: Google Chrome ≥ 137 ignores
+`--load-extension`. If none is installed, the script fetches one via
+`npx @puppeteer/browsers install chrome@stable`. The profile is persistent (logins survive
+restarts) and lives at `~/.cache/abseil-dev/profile`; override it with `ABSEIL_DEV_PROFILE`,
+`ABSEIL_DEBUG_PORT` (default `9222`, also the CDP port) or `ABSEIL_START_URL`.
+
+`dev-browser.sh` is a dev-only helper — exclude it when zipping for the Web Store.
+
 ## How it picks a tool
 
 When you open the popup, the shell (`popup.js`) looks at the active tab's URL and
 asks each registered module whether it handles this page. Specific tools are
-tried first; **Fonts** is the `fallback` module, so it runs anywhere a more
-specific tool doesn't claim the page. A small badge in the header shows which tool is
-active. Browser-internal pages (`chrome://`, the Web Store, `view-source:`) show
+tried first; **Fonts** and **Images** are `fallback` modules, so they run anywhere a
+more specific tool doesn't claim the page. A small badge in the header shows which tool is
+active; on an ordinary page it becomes a pair of pills that switch between the fallback
+tools like tabs (arrow keys work, each tab is mounted lazily and kept alive, and the last
+one used is remembered). Browser-internal pages (`chrome://`, the Web Store, `view-source:`) show
 a friendly "can't run here" note instead.
 
 | Page | Tool shown | Downloads to |
@@ -38,6 +62,7 @@ a friendly "can't run here" note instead.
 | `*.pinterest.*` board | Pinterest | `Downloads/Abseil/Pinterest/<board>/` |
 | `*.behance.net` project | Behance | `Downloads/Abseil/Behance/<project>/` |
 | any other website | Fonts | `Downloads/Abseil/Fonts/` |
+| any other website | Images | `Downloads/Abseil/Images/<site>/` |
 
 ## Architecture
 
@@ -61,16 +86,20 @@ extension/
       view.js              popup UI (start / stop / progress) — shares .gal* styles
       content.js           declared content script; scrolls + harvests images
       background.js        download handler (/source/ + displayed-rendition fallback)
+    images/
+      view.js              popup UI (a tab next to Fonts) — shares the Fonts card styles
+      collector.js         injected into each page frame; finds <img>, srcset, CSS bgs, icons
+      background.js        download handler (extension from URL, data: MIME, or HEAD)
   icons/                   toolbar icons (Font Abseil's icon, reused)
 ```
 
 **Message protocol.** Every runtime message carries a `module` field
-(`"fonts"` / `"pinterest"` / `"behance"`). `background.js` is a thin router that
+(`"fonts"` / `"images"` / `"pinterest"` / `"behance"`). `background.js` is a thin router that
 dispatches to that module's `handle()`, so modules never collide on a `type`.
 Two injection styles are used deliberately:
 
-- **Fonts** injects `collector.js` on demand (`chrome.scripting.executeScript`)
-  so it works on any site without a persistent footprint.
+- **Fonts** and **Images** inject their `collector.js` on demand
+  (`chrome.scripting.executeScript`) so they work on any site without a persistent footprint.
 - **Pinterest** and **Behance** use *declared* content scripts, because
   harvesting a large board/project is a long-running, cancellable job that must
   keep running after the popup closes. They share the gallery-downloader UI
@@ -91,8 +120,9 @@ Two injection styles are used deliberately:
    created (as `behance/background.js` does) so module listeners don't collide.
 3. Register it in `modules/registry.js` (add to `MODULES`) and in
    `background.js`'s `HANDLERS` table. Order doesn't matter for correctness:
-   specific modules are tried before the single `{ fallback: true }` module
-   (Fonts), so a catch-all can't shadow a specific tool.
+   specific modules are tried before the `{ fallback: true }` modules
+   (Fonts, Images — shown together as header tabs), so a catch-all can't shadow a
+   specific tool.
 
 No other file needs to change — the shell, theme, and router are module-agnostic.
 
@@ -112,7 +142,9 @@ acts when you open the popup (or, on Pinterest/Behance, when you press **Downloa
 - **Fonts:** sizes show only for same-origin fonts and cross-origin fonts whose
   server sends `Timing-Allow-Origin` (many CDNs, incl. Google's, don't — the file
   still downloads). Live previews need the font server to permit the extension's
-  cross-origin request.
+  cross-origin request. Cross-origin stylesheets whose `cssRules` are locked (Google
+  Fonts, Typekit, Bunny…) are re-fetched and parsed, following `@import`s up to 3 levels
+  deep, so their `@font-face` rules and family names still show up.
 - **Pinterest:** Pinterest changes its DOM regularly. If the popup reports "No
   pin grid found" on a valid board, check the selectors in `getBoardGrid()` in
   `modules/pinterest/content.js`. Keep the tab open (it needn't be focused) while
