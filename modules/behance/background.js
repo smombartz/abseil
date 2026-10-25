@@ -13,6 +13,7 @@ const state = {
   done: 0,
   failed: 0,
   total: 0,
+  lastId: null, // last completed download, for the popup's "Show in Finder"
 };
 let cancelled = false;
 // downloadId -> { fallbackUrl, filename, retried }
@@ -28,6 +29,7 @@ async function downloadAll(project, images) {
   state.total = images.length;
   state.done = 0;
   state.failed = 0;
+  state.lastId = null;
   state.message = `Downloading 0/${images.length}…`;
   broadcast();
 
@@ -73,6 +75,7 @@ chrome.downloads.onChanged.addListener((delta) => {
   if (delta.state.current === "complete") {
     tracked.delete(delta.id);
     state.done += 1;
+    state.lastId = delta.id;
     state.message = `Downloading… ${state.done}/${state.total}`;
     checkFinished();
     broadcast();

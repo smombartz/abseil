@@ -1,5 +1,49 @@
 # Change log
 
+## 2026-10-25 - "Show in Finder" after downloads complete
+
+**Session:** `67ca3a97-a9aa-4991-88be-90b7667e014e`
+
+**What Changed:**
+- New shared popup helper `modules/reveal.js`: `whenComplete(id)` watches a download until it is written to disk (or fails), `lastCompleted(ids)` does the same for a batch, and `showRevealButton()` inserts a "Show in Finder" button (labelled "Show in folder" off macOS) that calls `chrome.downloads.show()`
+- Fonts: the button appears next to a file's Download button, next to the family "Download all" in the card heading, and next to the footer "Download all", once that download finishes. Batches reveal their last completed file (they all share one folder)
+- Images: same for row downloads and the footer "Download all"
+- Pinterest/Behance: the background state now carries `lastId` (last completed download). The view shows a full-width "Show in Finder" button when a run isn't active and at least one file completed
+- Footer buttons now sit in a `.foot-actions` group so the extra button lines up beside "Download all"
+
+**Why:**
+- Feature request: jump straight to downloaded files instead of hunting through Downloads/Abseil
+
+**Files Modified:**
+- `modules/reveal.js` (new)
+- `modules/fonts/view.js`
+- `modules/images/view.js`
+- `modules/pinterest/view.js`, `modules/pinterest/background.js`
+- `modules/behance/view.js`, `modules/behance/background.js`
+- `popup.css`
+- `docs/log.md`
+
+---
+
+## 2026-10-25 - Fonts: real typeface name when the CSS family is an alias
+
+**Session:** `86723d30-f1e1-43e8-a761-78c5a890cc99`
+
+**What Changed:**
+- New `nameFromFile()` guesses a typeface name from a font's filename: splits CamelCase/separators, drops weight/style words (Light, SemiBold, Italic, 400…), version tags, hashes and generic words (font, webfont, latin…), e.g. `FoundersGrotesk-Light.woff2` → "Founders Grotesk"
+- New `displayName()` uses that guess as the card title only when the CSS family looks like an alias: 3 characters or fewer, or the guess's initials (`fg`). Google Fonts families and unparseable/hashed filenames keep the CSS name
+- When the title differs, a muted "CSS name: fg" line sits under it (new `.fam-alias` style); families now sort by the shown name
+
+**Why:**
+- On veleyross.wedding the site's minified CSS declares `font-family: fg` / `c`, so Abseil showed "fg" and "c" instead of Founders Grotesk and Canela
+
+**Files Modified:**
+- `modules/fonts/view.js`
+- `popup.css`
+- `docs/log.md`
+
+---
+
 ## 2026-10-25 - Fonts: per-family "Download all" button
 
 **Session:** `67ca3a97-a9aa-4991-88be-90b7667e014e`

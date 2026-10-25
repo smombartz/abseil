@@ -6,6 +6,8 @@
 // row / footer styles, and sits next to Fonts as a page-tool tab.
 "use strict";
 
+import { whenComplete, lastCompleted, showRevealButton } from "../reveal.js";
+
 const SMALL_PX = 64; // "Hide small" threshold (either side), when dimensions are known
 const TINY_PX = 2; // tracking pixels / spacers — never worth listing
 
@@ -16,7 +18,9 @@ const VIEW_HTML = `
   </main>
   <footer id="im-foot" class="foot" hidden>
     <span id="im-footCount" class="foot-count"></span>
-    <button id="im-downloadAll" class="btn btn-primary">Download all</button>
+    <div class="foot-actions">
+      <button id="im-downloadAll" class="btn btn-primary">Download all</button>
+    </div>
   </footer>
 `;
 
@@ -286,6 +290,7 @@ function mount({ view, barActions, tab, host }) {
         item: { url: rec.url, site: host },
       });
       flash(btn, !!(res && res.ok), original, (res && res.error) || "Download failed");
+      if (res && res.ok) whenComplete(res.id).then((ok) => ok && showRevealButton(btn, res.id));
     } catch (e) {
       flash(btn, false, original, e && e.message ? e.message : "Download failed");
     }
@@ -304,6 +309,10 @@ function mount({ view, barActions, tab, host }) {
         items: recs.map((r) => ({ url: r.url, site: host })),
       });
       downloadAllBtn.textContent = res && res.ok ? `Saved ${res.okCount}/${res.total}` : "Failed";
+      const ids = ((res && res.results) || []).filter((r) => r.ok).map((r) => r.id);
+      if (ids.length) {
+        lastCompleted(ids).then((id) => id !== null && showRevealButton(downloadAllBtn, id, "btn"));
+      }
     } catch {
       downloadAllBtn.textContent = "Failed";
     } finally {

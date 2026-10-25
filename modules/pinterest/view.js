@@ -6,6 +6,8 @@
 // view just kicks things off, then mirrors live state on each open.
 "use strict";
 
+import { REVEAL_LABEL } from "../reveal.js";
+
 // Matches the content_scripts host list in manifest.json. On a Pinterest TLD we
 // don't cover, this returns false and the shell falls back to the Fonts tool —
 // still useful, just no board download.
@@ -24,6 +26,7 @@ const VIEW_HTML = `
     <div class="gal-actions">
       <button id="pt-start" class="btn btn-primary gal-btn"
               title="Scroll the board and download every pin at full resolution">Download this board</button>
+      <button id="pt-reveal" class="btn gal-btn" hidden>${REVEAL_LABEL}</button>
       <button id="pt-stop" class="btn gal-btn" hidden aria-label="Stop downloading this board">Stop</button>
     </div>
     <div id="pt-status" class="gal-status" role="status" aria-live="polite"></div>
@@ -35,6 +38,7 @@ function mount({ view, tab }) {
 
   const startBtn = view.querySelector("#pt-start");
   const stopBtn = view.querySelector("#pt-stop");
+  const revealBtn = view.querySelector("#pt-reveal");
   const statusEl = view.querySelector("#pt-status");
 
   function render(state) {
@@ -49,6 +53,9 @@ function mount({ view, tab }) {
     startBtn.disabled = busy;
     startBtn.textContent = busy ? "Working…" : "Download this board";
     stopBtn.hidden = !busy;
+    // once a run has finished, reveal the folder via its last completed file
+    revealBtn.hidden = busy || !state.lastId;
+    if (state.lastId) revealBtn.dataset.id = String(state.lastId);
   }
 
   // Show current state on open, then live-update from background broadcasts.
@@ -69,10 +76,19 @@ function mount({ view, tab }) {
       startBtn.disabled = true;
       startBtn.textContent = "Working…";
       stopBtn.hidden = false;
+      revealBtn.hidden = true;
     } catch {
       statusEl.textContent =
         "Couldn’t reach this Pinterest page. Reload the tab and try again.";
       statusEl.classList.remove("busy");
+    }
+  });
+
+  revealBtn.addEventListener("click", () => {
+    try {
+      chrome.downloads.show(Number(revealBtn.dataset.id));
+    } catch {
+      // the file was moved or deleted since; nothing to reveal
     }
   });
 

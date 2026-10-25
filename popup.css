@@ -176,6 +176,12 @@ body {
   font-size: 13px;
   word-break: break-word;
 }
+.fam-alias {
+  font-weight: 400;
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}
 .tags { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
 .tag {
   font-size: 9.5px;
@@ -312,6 +318,7 @@ body {
 }
 .foot[hidden] { display: none; } /* display:flex would otherwise beat [hidden] */
 .foot-count { font-size: 11px; color: var(--muted); }
+.foot-actions { display: flex; align-items: center; gap: 6px; }
 
 /* ---- gallery-downloader modules (Pinterest, Behance, …) ---- */
 .gal {

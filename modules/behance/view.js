@@ -5,6 +5,8 @@
 // shares the gallery-downloader panel styles (.gal*) defined in popup.css.
 "use strict";
 
+import { REVEAL_LABEL } from "../reveal.js";
+
 // Matches the content_scripts host in manifest.json. On any non-behance page the
 // shell falls through to the Fonts fallback.
 const BEHANCE_HOST = /(^|\.)behance\.net$/i;
@@ -21,6 +23,7 @@ const VIEW_HTML = `
     <div class="gal-actions">
       <button id="bh-start" class="btn btn-primary gal-btn"
               title="Scroll the project and download every image at full resolution">Download this project</button>
+      <button id="bh-reveal" class="btn gal-btn" hidden>${REVEAL_LABEL}</button>
       <button id="bh-stop" class="btn gal-btn" hidden aria-label="Stop downloading this project">Stop</button>
     </div>
     <div id="bh-status" class="gal-status" role="status" aria-live="polite"></div>
@@ -32,6 +35,7 @@ function mount({ view, tab }) {
 
   const startBtn = view.querySelector("#bh-start");
   const stopBtn = view.querySelector("#bh-stop");
+  const revealBtn = view.querySelector("#bh-reveal");
   const statusEl = view.querySelector("#bh-status");
 
   function render(state) {
@@ -46,6 +50,9 @@ function mount({ view, tab }) {
     startBtn.disabled = busy;
     startBtn.textContent = busy ? "Working…" : "Download this project";
     stopBtn.hidden = !busy;
+    // once a run has finished, reveal the folder via its last completed file
+    revealBtn.hidden = busy || !state.lastId;
+    if (state.lastId) revealBtn.dataset.id = String(state.lastId);
   }
 
   // Show current state on open, then live-update from background broadcasts.
@@ -66,10 +73,19 @@ function mount({ view, tab }) {
       startBtn.disabled = true;
       startBtn.textContent = "Working…";
       stopBtn.hidden = false;
+      revealBtn.hidden = true;
     } catch {
       statusEl.textContent =
         "Couldn’t reach this Behance page. Reload the tab and try again.";
       statusEl.classList.remove("busy");
+    }
+  });
+
+  revealBtn.addEventListener("click", () => {
+    try {
+      chrome.downloads.show(Number(revealBtn.dataset.id));
+    } catch {
+      // the file was moved or deleted since; nothing to reveal
     }
   });
 

@@ -5,6 +5,8 @@
 // the universal fallback module (registry puts it last).
 "use strict";
 
+import { whenComplete, lastCompleted, showRevealButton } from "../reveal.js";
+
 const PREVIEW_TEXT = "Aa Bb Cc 123";
 const previewIdSeq = (() => {
   let n = 0;
@@ -18,7 +20,9 @@ const VIEW_HTML = `
   </main>
   <footer id="fa-foot" class="foot" hidden>
     <span id="fa-footCount" class="foot-count"></span>
-    <button id="fa-downloadAll" class="btn btn-primary">Download all</button>
+    <div class="foot-actions">
+      <button id="fa-downloadAll" class="btn btn-primary">Download all</button>
+    </div>
   </footer>
 `;
 
@@ -83,9 +87,11 @@ function mergeFrames(frames) {
     famMap.get(key).files.push(rec);
   }
 
+  for (const fam of famMap.values()) fam.name = displayName(fam);
+
   const families = Array.from(famMap.values()).sort((a, b) => {
     if (a.used !== b.used) return a.used ? -1 : 1; // used first
-    return a.family.localeCompare(b.family);
+    return a.name.localeCompare(b.name);
   });
 
   // network-only files that never matched an accessible @font-face
@@ -112,6 +118,64 @@ function fileLabel(rec) {
   } catch {
     return rec.url;
   }
+}
+
+// ---- typeface name from filenames -------------------------------------------
+// Sites often give @font-face a short alias (`font-family: fg`) while the files keep
+// the real name (`FoundersGrotesk-Light.woff2`). Guess that name from the filename.
+const STYLE_WORDS = new Set([
+  "thin", "hairline", "light", "regular", "normal", "book", "roman", "medium",
+  "bold", "black", "heavy", "italic", "oblique", "it",
+  "extra", "ultra", "semi", "demi", "super",
+  "variable", "var", "vf",
+]);
+const NOISE_WORDS = new Set([
+  "font", "fonts", "webfont", "webfonts", "web", "wf", "subset", "latin", "ext", "cyrillic", "greek", "vietnamese",
+]);
+
+function nameFromFile(rec) {
+  if (rec.isData) return "";
+  let base;
+  try {
+    base = decodeURIComponent(new URL(rec.url).pathname.split("/").pop() || "");
+  } catch {
+    return "";
+  }
+  base = base.replace(/\.(woff2?|ttf|otf|eot|svg)$/i, "");
+  const words = base
+    .replace(/([a-z])([A-Z])/g, "$1 $2") // FoundersGrotesk -> Founders Grotesk
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2") // SFPro -> SF Pro
+    .split(/[\s\-_.+]+/)
+    .filter(Boolean)
+    .filter((w) => !NOISE_WORDS.has(w.toLowerCase()))
+    .filter((w) => !/^v\d+$/i.test(w) && !/^[a-f0-9]{6,}$/i.test(w)); // versions, hashes
+  while (words.length) {
+    const last = words[words.length - 1].toLowerCase();
+    if (STYLE_WORDS.has(last) || /^\d+$/.test(last)) words.pop();
+    else break;
+  }
+  const name = words.map((w) => (w === w.toLowerCase() ? w[0].toUpperCase() + w.slice(1) : w)).join(" ");
+  // reject anything that still looks like a hash or is too short to be a name
+  if (name.replace(/[^A-Za-z]/g, "").length < 3 || name.length > 40) return "";
+  if (words.some((w) => w.length >= 6 && /\d/.test(w) && /[a-z]/i.test(w))) return "";
+  return name;
+}
+
+// The card title: the CSS family, unless it looks like an alias of the filename name
+// (very short, like "c", or the initials of it, like "fg" for Founders Grotesk).
+function displayName(fam) {
+  if (fam.files.some(isGoogleFont)) return fam.family; // Google names are real, files are hashed
+  const counts = new Map();
+  for (const rec of fam.files) {
+    const n = nameFromFile(rec);
+    if (n) counts.set(n, (counts.get(n) || 0) + 1);
+  }
+  if (!counts.size) return fam.family;
+  const guess = Array.from(counts).sort((a, b) => b[1] - a[1])[0][0];
+  const css = fam.family.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const initials = guess.split(" ").map((w) => w[0].toLowerCase()).join("");
+  if (css === guess.toLowerCase().replace(/[^a-z0-9]/g, "")) return fam.family;
+  return css.length <= 3 || css === initials ? guess : fam.family;
 }
 
 // Google Fonts serves every file from fonts.gstatic.com.
@@ -265,7 +329,14 @@ function mount({ view, barActions, tab }) {
     head.className = "card-head";
     const name = document.createElement("div");
     name.className = "fam";
-    name.textContent = fam.family;
+    name.textContent = fam.name;
+    if (fam.name !== fam.family) {
+      // the title came from the filenames; keep the page's own alias visible
+      const alias = document.createElement("div");
+      alias.className = "fam-alias";
+      alias.textContent = `CSS name: ${fam.family}`;
+      name.appendChild(alias);
+    }
     const tags = document.createElement("div");
     tags.className = "tags";
     const tag = document.createElement("span");
@@ -288,7 +359,7 @@ function mount({ view, barActions, tab }) {
       const famBtn = document.createElement("button");
       famBtn.className = "btn btn-dl btn-fam";
       famBtn.textContent = "Download all";
-      famBtn.title = `Download all ${fam.files.length} files of ${fam.family}`;
+      famBtn.title = `Download all ${fam.files.length} files of ${fam.name}`;
       famBtn.setAttribute("aria-label", famBtn.title);
       famBtn.addEventListener("click", () => downloadFamily(fam, famBtn));
       tags.appendChild(famBtn);
@@ -398,6 +469,7 @@ function mount({ view, barActions, tab }) {
       if (res && res.ok) {
         btn.textContent = "Saved";
         btn.classList.add("done");
+        whenComplete(res.id).then((ok) => ok && showRevealButton(btn, res.id));
       } else {
         btn.textContent = "Failed";
         btn.classList.add("fail");
@@ -416,6 +488,13 @@ function mount({ view, barActions, tab }) {
     }
   }
 
+  // Once a batch has finished writing, offer to reveal it (they all share one folder).
+  function revealBatch(res, btn, className) {
+    const ids = ((res && res.results) || []).filter((r) => r.ok).map((r) => r.id);
+    if (!ids.length) return;
+    lastCompleted(ids).then((id) => id !== null && showRevealButton(btn, id, className));
+  }
+
   async function downloadFamily(fam, btn) {
     const original = btn.textContent;
     btn.disabled = true;
@@ -426,6 +505,7 @@ function mount({ view, barActions, tab }) {
         type: "downloadAll",
         items: fam.files.map(recToItem),
       });
+      revealBatch(res, btn, "btn btn-dl btn-fam");
       if (res && res.ok && res.okCount === res.total) {
         btn.textContent = `Saved ${res.okCount}`;
         btn.classList.add("done");
@@ -461,6 +541,7 @@ function mount({ view, barActions, tab }) {
         type: "downloadAll",
         items: recs.map(recToItem),
       });
+      revealBatch(res, downloadAllBtn, "btn");
       if (res && res.ok) {
         downloadAllBtn.textContent = `Saved ${res.okCount}/${res.total}`;
       } else {
