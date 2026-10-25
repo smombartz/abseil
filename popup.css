@@ -176,7 +176,7 @@ body {
   font-size: 13px;
   word-break: break-word;
 }
-.tags { display: flex; gap: 5px; flex-shrink: 0; }
+.tags { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
 .tag {
   font-size: 9.5px;
   font-weight: 700;
@@ -277,6 +277,7 @@ body {
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: 0.5; cursor: default; }
 .btn-dl { padding: 5px 9px; font-size: 11px; }
+.btn-fam { padding: 2px 7px; font-size: 10px; border-radius: 6px; }
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);

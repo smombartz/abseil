@@ -283,6 +283,16 @@ function mount({ view, barActions, tab }) {
       tags.appendChild(g);
     }
     tags.appendChild(tag);
+    if (fam.files.length > 1) {
+      // grab the whole family (every weight/style/format) in one go
+      const famBtn = document.createElement("button");
+      famBtn.className = "btn btn-dl btn-fam";
+      famBtn.textContent = "Download all";
+      famBtn.title = `Download all ${fam.files.length} files of ${fam.family}`;
+      famBtn.setAttribute("aria-label", famBtn.title);
+      famBtn.addEventListener("click", () => downloadFamily(fam, famBtn));
+      tags.appendChild(famBtn);
+    }
     head.appendChild(name);
     head.appendChild(tags);
     card.appendChild(head);
@@ -403,6 +413,39 @@ function mount({ view, barActions, tab }) {
         btn.textContent = original;
         btn.classList.remove("done", "fail");
       }, 2200);
+    }
+  }
+
+  async function downloadFamily(fam, btn) {
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "…";
+    try {
+      const res = await chrome.runtime.sendMessage({
+        module: "fonts",
+        type: "downloadAll",
+        items: fam.files.map(recToItem),
+      });
+      if (res && res.ok && res.okCount === res.total) {
+        btn.textContent = `Saved ${res.okCount}`;
+        btn.classList.add("done");
+      } else if (res && res.ok) {
+        btn.textContent = `Saved ${res.okCount}/${res.total}`;
+        btn.classList.add(res.okCount ? "done" : "fail");
+      } else {
+        btn.textContent = "Failed";
+        btn.classList.add("fail");
+      }
+    } catch (e) {
+      btn.textContent = "Failed";
+      btn.classList.add("fail");
+      btn.title = e && e.message ? e.message : "Download failed";
+    } finally {
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = original;
+        btn.classList.remove("done", "fail");
+      }, 2600);
     }
   }
 

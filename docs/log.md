@@ -1,5 +1,43 @@
 # Change log
 
+## 2026-10-25 - Fonts: per-family "Download all" button
+
+**Session:** `67ca3a97-a9aa-4991-88be-90b7667e014e`
+
+**What Changed:**
+- Each font family card with more than one file now has a small "Download all" button in its heading, next to the used/declared tags
+- It sends just that family's files to the existing `downloadAll` background handler, then shows "Saved N" (or "Saved N/M" if some failed) before resetting
+- New `.btn-fam` style (compact, sized to sit with the tag pills); `.tags` now centres its items vertically
+
+**Why:**
+- Feature request: grab every weight/style/format of one family at once, without downloading the whole page's fonts
+
+**Files Modified:**
+- `modules/fonts/view.js`
+- `popup.css`
+- `docs/log.md`
+
+---
+
+## 2026-10-15 - CLAUDE.md split into general CLAUDE.md + PROJECT.md
+
+**Session:** `f8fad04b-426f-4cf7-8c39-ee01d8036b49`
+
+**What Changed:**
+- New `PROJECT.md` holds the project-specific part of the old `CLAUDE.md`, verbatim: the Project Overview and Key Features
+- `CLAUDE.md` replaced with the new general template, which imports `PROJECT.md` (`@PROJECT.md`); its Documentation, Plans, Verification and Logging rules replace the older wording of the same rules
+- Dropped the empty "Current Project State" placeholder section
+
+**Why:**
+- General working rules and project context were mixed in one file. With the split, the general rules can be updated in every project by replacing `CLAUDE.md` whole, while project context stays in `PROJECT.md` (which wins where the two disagree)
+
+**Files Modified:**
+- `CLAUDE.md`
+- `PROJECT.md` (new)
+- `docs/log.md`
+
+---
+
 ## 2026-09-27 - Logo and screenshots in README
 
 **What Changed:**
