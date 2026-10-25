@@ -1,0 +1,27 @@
+{
+ "createdAt": "2026-10-25T16:01:48.557Z",
+ "pages": [
+  {
+   "url": "https://www.corphes.gr/en/",
+   "scheme": "light",
+   "raw": "design-system/abseil/.extraction/a/raw/www-corphes-gr-en-light.json",
+   "screenshot": "design-system/abseil/.extraction/a/screens/www-corphes-gr-en-light.png",
+   "colors": 9,
+   "textStyles": 22,
+   "declaredVars": 0,
+   "skippedThirdParty": 0,
+   "inaccessibleSheets": 0
+  },
+  {
+   "url": "https://www.corphes.gr/en/",
+   "scheme": "dark",
+   "raw": "design-system/abseil/.extraction/a/raw/www-corphes-gr-en-dark.json",
+   "screenshot": "design-system/abseil/.extraction/a/screens/www-corphes-gr-en-dark.png",
+   "colors": 9,
+   "textStyles": 22,
+   "declaredVars": 0,
+   "skippedThirdParty": 0,
+   "inaccessibleSheets": 0
+  }
+ ]
+}

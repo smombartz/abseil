@@ -107,8 +107,9 @@ extension/
       view.js              popup UI (a tab next to Fonts) — shares the Fonts card styles
       collector.js         injected into each page frame; finds <img>, srcset, CSS bgs, icons
       background.js        download handler (extension from URL, data: MIME, or HEAD)
-  icons/                   toolbar icons (Font Abseil's icon, reused)
-  icon.svg                 source logo (also shown in this README)
+  icons/                   toolbar icons: PNGs rendered from icons/icon-rounded.svg (icon.svg with rounded corners)
+  icon.svg                 app icon / favicon: white mark on #F06543 (also shown in this README and the popup header)
+  logo.svg                 standalone logo mark (black, transparent background)
   docs/screenshots/        popup screenshots used in this README
 ```
 

@@ -1,5 +1,51 @@
 # Change log
 
+## 2026-10-25 - Rounded-corner toolbar icon
+
+**Session:** `efa3023f-d1bc-4e82-a4ea-20de4bfc61f2`
+
+**What Changed:**
+- New `icons/icon-rounded.svg`: the `icon.svg` mark on a `#F06543` square with rounded corners (`rx="80"` on the 360 canvas, about 22%), corners transparent
+- `icons/icon16/32/48/128.png` regenerated from it with `rsvg-convert` (now RGBA), so the Chrome toolbar and extensions page show the rounded icon
+- `icon.svg` (the square Figma favicon) and the popup header are unchanged
+- README file tree updated
+- First tried a fully round (circle) icon, then switched to rounded corners at the user's request
+
+**Why:**
+- Requested: the extension icon in Chrome's toolbar should have rounded corners
+
+**Files Modified:**
+- `icons/icon-rounded.svg` (new)
+- `icons/icon16.png`, `icons/icon32.png`, `icons/icon48.png`, `icons/icon128.png`
+- `README.md`
+
+---
+
+## 2026-10-25 - New logo, icon and accent colour from Figma
+
+**Session:** `efa3023f-d1bc-4e82-a4ea-20de4bfc61f2`
+
+**What Changed:**
+- `icon.svg` replaced with the new Figma favicon (node 2:53): white mark on a `#F06543` square. The Figma canvas background rect and layer ids were stripped
+- New `logo.svg` from Figma (node 2:55): the standalone mark in black on a transparent background
+- `icons/icon16/32/48/128.png` regenerated from `icon.svg` with `rsvg-convert`
+- Popup header now shows `icon.svg` directly (sharp at any DPI) instead of `icons/icon32.png`
+- Accent colour `--accent` changed from `#ff6a3d` to the new brand `#f06543`. The primary button hover is now `#f37b5e`
+- README file tree updated for the new assets
+
+**Why:**
+- New brand identity designed in Figma (https://www.figma.com/design/oshCnKabNZES8GjDQWn0Mm/Abseil)
+
+**Files Modified:**
+- `icon.svg`
+- `logo.svg` (new)
+- `icons/icon16.png`, `icons/icon32.png`, `icons/icon48.png`, `icons/icon128.png`
+- `popup.html`
+- `popup.css`
+- `README.md`
+
+---
+
 ## 2026-10-25 - "Show in Finder" after downloads complete
 
 **Session:** `67ca3a97-a9aa-4991-88be-90b7667e014e`

@@ -5,7 +5,7 @@
   --line: #2a2f3a;
   --text: #e8eaf0;
   --muted: #9aa3b2;
-  --accent: #ff6a3d;
+  --accent: #f06543;
   --accent-2: #ffd166;
   --good: #4ade80;
   --bad: #f87171;
@@ -289,7 +289,7 @@ body {
   border-color: var(--accent);
   color: #1a0e08;
 }
-.btn-primary:hover { background: #ff7d56; }
+.btn-primary:hover { background: #f37b5e; }
 .btn.done { color: var(--good); border-color: rgba(74, 222, 128, 0.4); }
 .btn.fail { color: var(--bad); border-color: rgba(248, 113, 113, 0.4); }
 /* Visible keyboard focus — the dark theme hides the browser default. accent-2
