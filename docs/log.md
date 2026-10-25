@@ -1,5 +1,26 @@
 # Change log
 
+## 2026-10-25 - Fonts: family downloads go into a per-family subfolder
+
+**Session:** `86723d30-f1e1-43e8-a761-78c5a890cc99`
+
+**What Changed:**
+- A family card's "Download all" now saves into `Downloads/Abseil/Fonts/<Family>/`, named by the shown family name (e.g. `Abseil/Fonts/Founders Grotesk/`). The popup sends `folder` with the `downloadAll` message; the background turns it into one safe path segment (`safeSegment()`: no slashes, colons, control characters, leading/trailing dots or reserved Windows names)
+- Single-file downloads and the page-wide "Download all" still go flat into `Abseil/Fonts/`
+- Saved filenames now use the shown family name too (`Founders Grotesk-300.woff2` instead of `fg-300.woff2`)
+- Fixed `sanitize()` in the fonts background: its regex had a mangled control-character range and stripped spaces and hyphens from every name (`FoundersGrotesk`); it now matches the images module (`\u0000-\u001f`)
+
+**Why:**
+- Feature request: keep each downloaded family together in its own named folder
+
+**Files Modified:**
+- `modules/fonts/background.js`
+- `modules/fonts/view.js`
+- `README.md`
+- `docs/log.md`
+
+---
+
 ## 2026-10-25 - Rounded-corner toolbar icon
 
 **Session:** `efa3023f-d1bc-4e82-a4ea-20de4bfc61f2`

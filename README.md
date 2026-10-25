@@ -78,7 +78,7 @@ a friendly "can't run here" note instead.
 |---|---|---|
 | `*.pinterest.*` board | Pinterest | `Downloads/Abseil/Pinterest/<board>/` |
 | `*.behance.net` project | Behance | `Downloads/Abseil/Behance/<project>/` |
-| any other website | Fonts | `Downloads/Abseil/Fonts/` |
+| any other website | Fonts | `Downloads/Abseil/Fonts/` (a family's "Download all": `Fonts/<family>/`) |
 | any other website | Images | `Downloads/Abseil/Images/<site>/` |
 
 ## Architecture

@@ -87,7 +87,10 @@ function mergeFrames(frames) {
     famMap.get(key).files.push(rec);
   }
 
-  for (const fam of famMap.values()) fam.name = displayName(fam);
+  for (const fam of famMap.values()) {
+    fam.name = displayName(fam);
+    for (const rec of fam.files) rec.name = fam.name; // saved files use the shown name
+  }
 
   const families = Array.from(famMap.values()).sort((a, b) => {
     if (a.used !== b.used) return a.used ? -1 : 1; // used first
@@ -209,7 +212,7 @@ function fontOrigin(fam, pageUrl) {
 function recToItem(rec) {
   return {
     url: rec.url,
-    family: rec.family,
+    family: rec.name || rec.family,
     weight: rec.weight,
     style: rec.style,
     ext: rec.ext,
@@ -504,6 +507,7 @@ function mount({ view, barActions, tab }) {
         module: "fonts",
         type: "downloadAll",
         items: fam.files.map(recToItem),
+        folder: fam.name, // saved into Abseil/Fonts/<family>/
       });
       revealBatch(res, btn, "btn btn-dl btn-fam");
       if (res && res.ok && res.okCount === res.total) {

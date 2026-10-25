@@ -15,7 +15,7 @@ function isAllowedUrl(url) {
 // Sanitize a string into a safe filename component.
 function sanitize(part) {
   return (part || "")
-    .replace(/[\\/:*?"<>| -]/g, "")
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, "")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 120);
@@ -31,8 +31,15 @@ function basenameFromUrl(url) {
   }
 }
 
-// Build "Family-weight-style.ext", falling back to the URL basename.
-function buildFilename({ url, family, weight, style, ext }) {
+// Sanitize a name into one safe path segment (same guards as filenames).
+function safeSegment(part) {
+  let seg = sanitize(part).replace(/^[.\s]+|[.\s]+$/g, "");
+  if (/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i.test(seg)) seg = "_" + seg;
+  return seg;
+}
+
+// Build "[folder/]Family-weight-style.ext", falling back to the URL basename.
+function buildFilename({ url, family, weight, style, ext }, folder) {
   let name = "";
   if (family && family !== "(unnamed)") {
     const bits = [sanitize(family)];
@@ -58,10 +65,12 @@ function buildFilename({ url, family, weight, style, ext }) {
     finalExt = m ? m[1].toLowerCase() : "";
   }
   if (!FONT_EXTS.has(finalExt)) finalExt = "bin"; // never honor a non-font extension
-  return `${DOWNLOAD_DIR}/${name}.${finalExt}`;
+  const dir = folder ? `${DOWNLOAD_DIR}/${folder}` : DOWNLOAD_DIR;
+  return `${dir}/${name}.${finalExt}`;
 }
 
-function downloadOne(item) {
+// folder: an already-sanitized subfolder of DOWNLOAD_DIR, or "" for none.
+function downloadOne(item, folder = "") {
   return new Promise((resolve) => {
     if (!item || !isAllowedUrl(item.url)) {
       resolve({ ok: false, url: item && item.url, error: "unsupported URL scheme" });
@@ -69,9 +78,9 @@ function downloadOne(item) {
     }
     let filename;
     try {
-      filename = buildFilename(item);
+      filename = buildFilename(item, folder);
     } catch {
-      filename = `${DOWNLOAD_DIR}/font.bin`;
+      filename = `${DOWNLOAD_DIR}/${folder ? folder + "/" : ""}font.bin`;
     }
     try {
       chrome.downloads.download(
@@ -101,10 +110,12 @@ export function handle(msg, _sender, sendResponse) {
   if (msg.type === "downloadAll") {
     (async () => {
       const items = Array.isArray(msg.items) ? msg.items : [];
+      // A family download goes into its own Abseil/Fonts/<Family>/ subfolder.
+      const folder = safeSegment(msg.folder);
       const results = [];
       for (const item of items) {
         // Sequential, so a flood of files doesn't trip download rate limits.
-        results.push(await downloadOne(item));
+        results.push(await downloadOne(item, folder));
       }
       const okCount = results.filter((r) => r.ok).length;
       sendResponse({ ok: true, total: items.length, okCount, results });
